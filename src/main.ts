@@ -1,11 +1,29 @@
 import { ApolloServer } from 'apollo-server';
 
-import resolvers from './resolvers';
-import typeDefs from './type-defs';
+import {DateTimeMock, JSONMock} from "graphql-scalars";
 
-const server = new ApolloServer({ resolvers, typeDefs });
+import { environment } from './environment'
+import  resolvers  from './gql/resolvers'
+import  typeDefs  from './gql/type-defs'
+import dataSources from './gql/datasources'
 
-server.listen()
+const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+    dataSources,
+    introspection: environment.apollo.introspection,
+    playground: environment.apollo.playground,
+    mocks: { DateTime: DateTimeMock, JSON: JSONMock}, //TODO - Remove in prod
+    mockEntireSchema: false, //TODO - Remove in prod
+
+    context: () => {
+        return {
+            token: 'foo',
+        };
+    },
+});
+
+server.listen(environment.port)
     .then(({ url }) => console.log(`Server ready at ${url}. `));
 
 if (module.hot) {
