@@ -15,12 +15,6 @@ const server = new ApolloServer({
     playground: environment.apollo.playground,
     mocks: { DateTime: DateTimeMock, JSON: JSONMock}, //TODO - Remove in prod
     mockEntireSchema: false, //TODO - Remove in prod
-
-    context: () => {
-        return {
-            token: 'foo',
-        };
-    },
 });
 
 server.listen(environment.port)

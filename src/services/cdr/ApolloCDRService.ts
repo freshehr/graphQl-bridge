@@ -20,7 +20,7 @@ class ApolloCDRService extends RESTDataSource {
 
     constructor() {
         super()
-        this.cdrService = new CDRService('c4h_r')
+        this.cdrService = new CDRService('c4h_e')
         this.baseURL = this.cdrService.restUrl('')
     }
 
@@ -69,16 +69,17 @@ class ApolloCDRService extends RESTDataSource {
 
     async runAQL(aqlString: string, ehrId: string) {
 
+        const aql = this.sanitizeAQL(aqlString)
 
         if (this.cdrService.config.apiType === APIType.openEHR) {
 
-            const response = await this.post(`query/aql`, {q: this.sanitizeAQL(aqlString)});
+            const response = await this.post(`query/aql`, {q: aql });
 
             //    console.log(JSON.stringify(response.rows))
             return {q: response.q, rows: response.rows, columns: response.columns}
 
         } else {
-            const response = await this.post(`query`, {aql: this.sanitizeAQL(aqlString)});
+            const response = await this.post(`query`, {aql: aql});
 
 
             //    console.log(JSON.stringify(response))
@@ -94,7 +95,7 @@ class ApolloCDRService extends RESTDataSource {
                             e/ehr_id/value as ehrId, 
                             e/ehr_status/subject/external_ref/id/value as subjectId, 
                             e/ehr_status/subject/external_ref/namespace as subjectNamespace
-                            FROM EHR e`;
+                            FROM EHR e$`;
 
         if (this.cdrService.config.apiType === APIType.openEHR) {
 
@@ -118,6 +119,75 @@ class ApolloCDRService extends RESTDataSource {
                         ehrId: row.ehrId,
                         subjectId: row.subjectId,
                         subjectNamespace: row.subjectNamespace,
+                    }
+                })
+                : [];
+
+        }
+    }
+
+    async listCompositionsBySubjectId(subjectId : string, subjectNamespace : string) {
+
+   //     const ehrId = await this.findEhrBySubject(subjectId, subjectNamespace)
+
+
+   //     await this.listCompositions(ehrId)
+
+    }
+
+        async listCompositions(ehrId : string) {
+
+
+        let ehr_id_constraint : string = '';
+
+        if (ehrId !== undefined)
+            ehr_id_constraint = ` [ehr_id/value='${ehrId}']`;
+
+        const aqlString : string = `SELECT
+                            e/ehr_id/value as ehrId, 
+                            c/uid/value as compositionId,
+                            c/name/value as compositionName,
+                            c/composer/name as composerName,
+                            c/context/start_time/value as startTime,
+                            c/context/end_time/value as endTime,
+                            c/context/health_care_facility/name as facilityName,                      
+                            c/archetype_details/template_id/value as templateId                      
+                            FROM EHR e ${ehr_id_constraint}
+                            CONTAINS  COMPOSITION c
+                        
+                            `;
+
+        if (this.cdrService.config.apiType === APIType.openEHR) {
+
+            const response = await this.post('query/aql', {q: this.sanitizeAQL(aqlString)});
+            return Array.isArray(response.rows)
+                ? response.rows.map((row: any) => {
+                    console.log(JSON.stringify(row))
+                    return {
+                        header :{
+                            ehrId: row[0],
+                            uid: row[1],
+                            compositionName: row[2],
+                            composerName : row[3],
+                            startTime: row[4],
+                            endTime : row[5],
+                            facilityName: row[6],
+                            templateId: row[7],
+                        }
+                    }
+                })
+                : [];
+
+        } else {
+            const response = await this.post('query', {aql: this.sanitizeAQL(aqlString)});
+            return Array.isArray(response.resultSet)
+                ? response.resultSet.map((row: any) => {
+                    return {
+                        header: {
+                            ehrId: row.ehrId,
+                            uid: row.compositionId,
+                            name: row.compositionName,
+                        }
                     }
                 })
                 : [];
@@ -161,6 +231,8 @@ class ApolloCDRService extends RESTDataSource {
 
 
             const response = await this.get('ehr', {subject_id: subjectId, subject_namespace: subjectNamespace});
+            console.log(JSON.stringify(response.http.headers));
+
             return {
                 ehrId: response.ehr_id.value,
                 subjectId: response.ehr_status.subject.external_ref.id.value,
@@ -209,24 +281,50 @@ class ApolloCDRService extends RESTDataSource {
         const body = this.populateEhrBody(subjectId,subjectNamespace)
 
         if (this.cdrService.config.apiType === APIType.openEHR) {
-            try {
+
+
                 const response = await this.post('ehr', body, {headers : {prefer : 'return=representation'}})
+
+
+                console.log(JSON.stringify(response.http.headers));
 
                 return {subjectId :subjectId, ehrId : response.ehr_id.value }
             }
-            catch(e)
-            {
-                console.log(e.message)
-            }
 
 
-        } else {
+
+         else {
             const response = await this.post('ehr', {subjectId : subjectId , subjectNamespace: subjectNamespace}, );
             return {ehrId : response.ehrId}
 
         }
     }
 
+   /* populateCompositionBody() : JSON {
+        return { ctx.start_time :" 2010-09"}
+
+    }
+    async createComposition(subjectId: string, subjectNamespace: string, templateId :string, body : JSON) {
+
+        const body = this.populateCompositionBody(body)
+
+        if (this.cdrService.config.apiType === APIType.openEHR) {
+
+
+            const response = await this.post('composition', body, {headers : {prefer : 'return=representation'}})
+
+
+            return {uid : response.uid  }
+        }
+
+
+
+        else {
+            const response = await this.post('composition', {}, );
+            return {ehrId : response.ehrId}
+
+        }
+    }*/
 
 }
 

@@ -1,6 +1,6 @@
-import gql from 'graphql-tag';
+import {gql}  from 'apollo-server';
 
-const typeDefs = gql`
+export default gql`
 
     scalar DateTime
     scalar JSON
@@ -50,22 +50,28 @@ const typeDefs = gql`
 
     type CompositionHeader {
         format : CompositionFormat
-        uid : String!
+        ehrId : String
+        uid : String
         name : String!
-        committerName: String
         committerId : ID
         composerName: String
         composerID : String
         facilityName: String
         facilityId: String
-        startTime : DateTime
+        startTime : DateTime!
         templateId: String
     }
     
     type Query {
+        """
+        Test Message.
+        """
+        testMessage: String!
+        
         listTemplates :[Template]
         aqlResultSet(aql : String, ehrId : String) : AQLResultSet
         listEhrs : [Ehr]
+        listCompositions(ehrId: String) : [Composition]
         findEhr(ehrId : String) :Ehr
         findEhrBySubject(subjectId : String, subjectNamespace : String) :Ehr
         findComposition(ehrId: String, compositionID : String) : Composition
@@ -87,5 +93,3 @@ const typeDefs = gql`
         vitalStatus : String
     }
 `
-
-export default typeDefs

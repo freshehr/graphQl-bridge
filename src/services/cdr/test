@@ -1,0 +1,20 @@
+SELECT c/composer as author,
+       c/context/start_time as dateRecorded,
+       z/data[at0001]/events[at0002]/data[at0003]/items[at0044]/value/value as hruPainValue,
+       z/data[at0001]/events[at0002]/data[at0003]/items[at0008]/value/value as hruFeelingLowValue,
+       z/data[at0001]/events[at0002]/data[at0003]/items[at0039]/value/value as hruLimitedValue,
+       z/data[at0001]/events[at0002]/data[at0003]/items[at0006]/value/value as hruDependentValue,
+       z/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude as hruScore,
+       s/data[at0001]/events[at0002]/data[at0003]/items[at0013]/value/value as IPSS_1,
+       s/data[at0001]/events[at0002]/data[at0003]/items[at0020]/value/value as IPSS_2,
+       s/data[at0001]/events[at0002]/data[at0003]/items[at0028]/value/value as IPSS_3,
+       s/data[at0001]/events[at0002]/data[at0003]/items[at0035]/value/value as IPSS_4,
+       s/data[at0001]/events[at0002]/data[at0003]/items[at0042]/value/value as IPSS_5,
+       s/data[at0001]/events[at0002]/data[at0003]/items[at0049]/value/value as IPSS_6,
+       s/data[at0001]/events[at0002]/data[at0003]/items[at0063]/value/magnitude as IPSS_totalScore,
+       s/data[at0001]/events[at0002]/data[at0003]/items[at0076]/value/defining_code/code_string as IPSS_GradeCode,
+       s/data[at0001]/events[at0002]/data[at0003]/items[at0076]/value/value as IPSS_GradeText
+FROM EHR e [ehr_id/value = '3e674739-950c-4b8a-976b-5aef21c618c5']
+CONTAINS COMPOSITION c[openEHR-EHR-COMPOSITION.report.v1]
+CONTAINS (OBSERVATION z[openEHR-EHR-OBSERVATION.howru.v1] or OBSERVATION s[openEHR-EHR-OBSERVATION.i_pss_prostate_score.v0])
+OFFSET 0 LIMIT 10

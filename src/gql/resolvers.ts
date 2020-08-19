@@ -4,7 +4,9 @@ import {DateTimeResolver, JSONResolver} from 'graphql-scalars';
 const resolvers = {
     DateTime: DateTimeResolver,
     JSON: JSONResolver,
-     Query: {
+    Query: {
+         testMessage: (): string => 'Hello World!',
+
          listTemplates: async (_source: any, _args: any, {dataSources}: any) =>
          {
              return dataSources.cdrAPI.listTemplates()
@@ -16,6 +18,10 @@ const resolvers = {
          listEhrs: async (_source: any, _args: any, {dataSources}: any) =>
          {
              return dataSources.cdrAPI.listEhrs()
+         },
+         listCompositions: async (_source: any,  {ehrId} : any, {dataSources}: any) =>
+         {
+             return dataSources.cdrAPI.listCompositions(ehrId)
          },
          findEhr: async (_source: any, {ehrId} :any, {dataSources}: any) =>
          {
